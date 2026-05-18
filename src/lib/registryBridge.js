@@ -1,9 +1,21 @@
-// Bridge to the component-library — imports all components via Vite glob
-// Globs are relative to THIS file's location: src/lib/ → ../../component-library/src/components/
+// Bridge to the component-library.
+// When installed via GitHub (npm install), components live in node_modules.
+// When developing locally with both repos side-by-side, falls back to the sibling path.
 
-const metaJs  = import.meta.glob('../../component-library/src/components/**/*.meta.js',  { eager: true })
-const metaJsx = import.meta.glob('../../component-library/src/components/**/*.meta.jsx', { eager: true })
-const comps   = import.meta.glob('../../component-library/src/components/**/*.jsx',       { eager: true })
+// node_modules path (GitHub install)
+const metaJsNm  = import.meta.glob('/node_modules/@jayjay/component-library/src/components/**/*.meta.js',  { eager: true })
+const metaJsxNm = import.meta.glob('/node_modules/@jayjay/component-library/src/components/**/*.meta.jsx', { eager: true })
+const compsNm   = import.meta.glob('/node_modules/@jayjay/component-library/src/components/**/*.jsx',       { eager: true })
+
+// Local sibling path (local dev without npm install)
+const metaJsLocal  = import.meta.glob('../../component-library/src/components/**/*.meta.js',  { eager: true })
+const metaJsxLocal = import.meta.glob('../../component-library/src/components/**/*.meta.jsx', { eager: true })
+const compsLocal   = import.meta.glob('../../component-library/src/components/**/*.jsx',       { eager: true })
+
+// Merge: node_modules takes priority, local fills in anything missing
+const metaJs  = { ...metaJsLocal,  ...metaJsNm  }
+const metaJsx = { ...metaJsxLocal, ...metaJsxNm }
+const comps   = { ...compsLocal,   ...compsNm   }
 
 let _registry = null
 
