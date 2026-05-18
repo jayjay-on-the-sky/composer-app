@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+:root {
+  --shell-bg:          #0a0a0a;
+  --shell-sidebar:     #111111;
+  --shell-border:      #1f1f1f;
+  --shell-surface:     #1a1a1a;
+  --shell-text:        #e4e4e7;
+  --shell-text-muted:  #71717a;
+  --shell-accent:      #6366f1;
+  --shell-accent-hover:#4f46e5;
+
+  --color-primary:         #6366f1;
+  --color-primary-hover:   #4f46e5;
+  --color-primary-active:  #4338ca;
+  --color-primary-muted:   #eef2ff;
+  --color-canvas:          #ffffff;
+  --color-surface:         #f4f4f5;
+  --color-surface-strong:  #e4e4e7;
+  --color-ink:             #09090b;
+  --color-ink-muted:       #3f3f46;
+  --color-body:            #52525b;
+  --color-muted:           #a1a1aa;
+  --color-hairline:        #e4e4e7;
+  --color-on-primary:      #ffffff;
+  --color-success:         #16a34a;
+  --color-warning:         #d97706;
+  --color-error:           #dc2626;
+
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-pill: 9999px;
+
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+@theme {
+  --color-primary:        var(--color-primary);
+  --color-primary-hover:  var(--color-primary-hover);
+  --color-primary-muted:  var(--color-primary-muted);
+  --color-canvas:         var(--color-canvas);
+  --color-surface:        var(--color-surface);
+  --color-surface-strong: var(--color-surface-strong);
+  --color-ink:            var(--color-ink);
+  --color-ink-muted:      var(--color-ink-muted);
+  --color-body:           var(--color-body);
+  --color-muted:          var(--color-muted);
+  --color-hairline:       var(--color-hairline);
+  --color-on-primary:     var(--color-on-primary);
+  --color-success:        var(--color-success);
+  --color-warning:        var(--color-warning);
+  --color-error:          var(--color-error);
+  --color-shell-bg:          var(--shell-bg);
+  --color-shell-sidebar:     var(--shell-sidebar);
+  --color-shell-border:      var(--shell-border);
+  --color-shell-surface:     var(--shell-surface);
+  --color-shell-text:        var(--shell-text);
+  --color-shell-text-muted:  var(--shell-text-muted);
+  --color-shell-accent:      var(--shell-accent);
+  --font-family-sans: var(--font-sans);
+  --font-family-mono: var(--font-mono);
+  --radius-xs:   var(--radius-xs);
+  --radius-sm:   var(--radius-sm);
+  --radius-md:   var(--radius-md);
+  --radius-lg:   var(--radius-lg);
+  --radius-xl:   var(--radius-xl);
+  --radius-pill: var(--radius-pill);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: var(--font-sans); background: var(--shell-bg); color: var(--shell-text); -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--shell-border); border-radius: 3px; }
