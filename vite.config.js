@@ -3,12 +3,21 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
 
+// Resolves to node_modules when installed from GitHub, falls back to local sibling for dev
+const libRoot = (() => {
+  try {
+    return resolve(__dirname, 'node_modules/@jayjay/component-library/src')
+  } catch {
+    return resolve(__dirname, '../component-library/src')
+  }
+})()
+
 export default defineConfig({
   plugins: [tailwindcss(), react()],
   resolve: {
     alias: {
-      '@lib': resolve(__dirname, '../component-library/src/lib'),
-      '@components': resolve(__dirname, '../component-library/src/components'),
+      '@lib':        resolve(libRoot, 'lib'),
+      '@components': resolve(libRoot, 'components'),
     },
   },
 })
