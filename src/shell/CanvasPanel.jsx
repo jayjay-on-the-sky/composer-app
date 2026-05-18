@@ -5,6 +5,7 @@ import { useComposer } from '../context/ComposerContext'
 import { compose } from '../lib/composerAgent'
 import ComposedPagePreview from './ComposedPagePreview'
 import { exportAsPng, exportAsHtml, copyHtml, exportAsJsx } from '../lib/composedExporter'
+import { logEvent } from '../lib/telemetry'
 
 function SkeletonSection() {
   return (
@@ -95,6 +96,7 @@ export default function CanvasPanel() {
     setExportOpen(false)
     const el = previewRef.current
     if (!el && type !== 'jsx') return
+    logEvent('export', { format: type, outputType: state.outputType, planTitle: state.plan?.title })
     if (type === 'png') await exportAsPng(el)
     else if (type === 'html') exportAsHtml(el, state.plan)
     else if (type === 'copy-html') { copyHtml(el, state.plan); setCopied(true); setTimeout(() => setCopied(false), 1500) }
