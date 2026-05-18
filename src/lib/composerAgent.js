@@ -1,4 +1,5 @@
 import { getManifest } from './registryBridge'
+import { logCall } from './telemetry'
 
 const SYSTEM_PROMPT = `You are a UI composition agent. Given a component manifest and a user request, output a JSON composition plan.
 
@@ -17,7 +18,7 @@ OUTPUT FORMAT:
   ]
 }`
 
-async function callClaude(userMessage, apiKey) {
+async function callClaude(userMessage, apiKey, modelName) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -27,7 +28,7 @@ async function callClaude(userMessage, apiKey) {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5',
+      model: modelName,
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
@@ -35,7 +36,7 @@ async function callClaude(userMessage, apiKey) {
   })
   if (!res.ok) throw new Error(`Claude API error: ${res.status}`)
   const data = await res.json()
-  return data.content[0].text
+  return { text: data.content[0].text, usage: data.usage }
 }
 
 async function callOllama(userMessage, ollamaUrl) {
@@ -50,7 +51,10 @@ async function callOllama(userMessage, ollamaUrl) {
   })
   if (!res.ok) throw new Error(`Ollama error: ${res.status}`)
   const data = await res.json()
-  return data.response
+  return {
+    text: data.response,
+    usage: { input_tokens: data.prompt_eval_count ?? 0, output_tokens: data.eval_count ?? 0 },
+  }
 }
 
 function parseJsonResponse(text) {
@@ -81,12 +85,18 @@ Output type: ${outputType}
 Return a JSON composition plan using only components from the manifest.`
 }
 
-export async function compose({ prompt, outputType = 'page', currentPlan = null }) {
-  const apiKey = localStorage.getItem('composer_claude_key') || import.meta.env.VITE_CLAUDE_API_KEY
-  const ollamaUrl = localStorage.getItem('composer_ollama_url') || import.meta.env.VITE_OLLAMA_URL || 'http://localhost:11434'
-  const model = localStorage.getItem('composer_model') || 'haiku'
+const MODEL_IDS = {
+  haiku:  'claude-haiku-4-5',
+  sonnet: 'claude-sonnet-4-5',
+}
 
-  if (!apiKey && model !== 'ollama') {
+export async function compose({ prompt, outputType = 'page', currentPlan = null }) {
+  const apiKey   = localStorage.getItem('composer_claude_key') || import.meta.env.VITE_CLAUDE_API_KEY
+  const ollamaUrl = localStorage.getItem('composer_ollama_url') || import.meta.env.VITE_OLLAMA_URL || 'http://localhost:11434'
+  const modelKey = localStorage.getItem('composer_model') || 'haiku'
+  const modelId  = MODEL_IDS[modelKey] || MODEL_IDS.haiku
+
+  if (!apiKey && modelKey !== 'ollama') {
     throw new Error('No API key configured. Open Settings ⚙️ to add your Claude API key.')
   }
 
@@ -96,15 +106,16 @@ export async function compose({ prompt, outputType = 'page', currentPlan = null 
   }
 
   const userMessage = buildUserMessage({ prompt, outputType, currentPlan, manifest })
+  const t0 = Date.now()
 
   // Try up to 2 attempts (for JSON parse failures)
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const raw = model === 'ollama'
+      const result = modelKey === 'ollama'
         ? await callOllama(userMessage, ollamaUrl)
-        : await callClaude(userMessage, apiKey)
+        : await callClaude(userMessage, apiKey, modelId)
 
-      const plan = parseJsonResponse(raw)
+      const plan = parseJsonResponse(result.text)
 
       // Validate structure
       if (!plan.sections || !Array.isArray(plan.sections)) {
@@ -119,13 +130,32 @@ export async function compose({ prompt, outputType = 'page', currentPlan = null 
         return valid
       })
 
+      logCall({
+        prompt,
+        outputType,
+        model: modelKey === 'ollama' ? 'ollama' : modelId,
+        inputTokens:  result.usage?.input_tokens  ?? 0,
+        outputTokens: result.usage?.output_tokens ?? 0,
+        durationMs: Date.now() - t0,
+        success: true,
+        planTitle: plan.title,
+        sectionCount: plan.sections.length,
+      })
+
       return plan
     } catch (err) {
       if (attempt === 0 && err.message.includes('JSON')) {
-        // Retry with explicit JSON reminder
         console.warn('Composer: JSON parse failed, retrying...')
         continue
       }
+      logCall({
+        prompt, outputType,
+        model: modelKey === 'ollama' ? 'ollama' : modelId,
+        inputTokens: 0, outputTokens: 0,
+        durationMs: Date.now() - t0,
+        success: false,
+        error: err.message,
+      })
       throw err
     }
   }
